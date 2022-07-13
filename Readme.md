@@ -42,6 +42,10 @@ make requirements
 vagrant up
 ```
 
+<p align="center">
+  <img alt="playbook" src="images/k8s-playbook.png">
+</p>
+
 3. Para ambiente
 
 ```bash
