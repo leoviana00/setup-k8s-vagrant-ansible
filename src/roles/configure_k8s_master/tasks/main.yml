@@ -35,8 +35,8 @@
       update_cache: yes
     vars:
       packages:
-        - kubelet=1.21.7-00 
-        - kubeadm=1.21.7-00 
+        - kubelet=1.21.7-00
+        - kubeadm=1.21.7-00
         - kubectl=1.21.7-00
 
   - name: Configurar o ip do nó
