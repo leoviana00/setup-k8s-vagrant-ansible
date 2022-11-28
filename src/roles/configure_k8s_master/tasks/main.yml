@@ -35,9 +35,9 @@
       update_cache: yes
     vars:
       packages:
-        - kubelet=1.21.7-00
-        - kubeadm=1.21.7-00
-        - kubectl=1.21.7-00
+        - kubelet
+        - kubeadm
+        - kubectl
 
   - name: Configurar o ip do nó
     lineinfile:
@@ -72,7 +72,7 @@
 # --------------------------------------------------
   - name: Instalar calico pod rede
     become: false
-    command: kubectl create -f https://docs.projectcalico.org/v3.18/manifests/calico.yaml
+    command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.5/manifests/calico.yaml
 
 # --------------------------------------------------
 # Gere o comando kube join para unir o nó ao cluster Kubernetes e armazene o comando no arquivo chamado join-command.
