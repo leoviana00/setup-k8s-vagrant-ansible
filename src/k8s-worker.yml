@@ -1,8 +1,5 @@
 - hosts: all
   become: yes
-  vars:
-    containerd_config_default_write: true
-    containerd_config_cgroup_driver_systemd: false
   roles:
-    - configure_docker
+    - configure_pre_requisitos
     - configure_k8s_worker
