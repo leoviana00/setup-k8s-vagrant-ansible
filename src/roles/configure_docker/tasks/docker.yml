@@ -1,5 +1,7 @@
 ---
-
+# ---------------------------------------------------
+#                INSTALAÇÃO DOCKER
+# ---------------------------------------------------
 - name: Remover versões legadas do docker
   package:
     name: "{{ item }}"
@@ -20,32 +22,121 @@
     state: present
     update_cache: true
 
-- name: Instalar containerd 1.5.10-1
+# - name: Instalar docker-ce 5:20.10.21
+#   apt:
+#     name:
+#       - "docker-ce=5:20.10.21~3-0~{{ ansible_distribution | lower }}-{{ ansible_distribution_release }}"
+#       - "docker-ce-cli=5:20.10.21~3-0~{{ ansible_distribution | lower }}-{{ ansible_distribution_release }}"
+#     state: present
+#     force: True
+
+- name: Configurar hold dos pacotes
   apt:
-    name: containerd.io=1.5.10-1
+    name: "{{ item }}"
+    state: latest
+    update_cache: true
+  with_items:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+
+# - name: Instalar pip
+#   package:
+#     name: "{{ item }}"
+#     state: present
+#     update_cache: yes
+#     force: true
+#   with_items:
+#     - python3-pip
+
+# - name: Instalar python-docker 
+#   pip:
+#     name: docker
+#     state: present
+
+- name: Restartar serviço do docker
+  service:
+    name: docker
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+
+# ---------------------------------------------------
+#                USUÁRIOS
+# ---------------------------------------------------
+- name: Criar grupo
+  group:
+    name: "{{ item }}"
+  with_items:
+    - vagrant
+    - docker
+
+- name: Add docker group to users {{ ansible_user }} groups
+  user:
+    name: "{{ ansible_user }}"
+    append: true
+    groups: docker
+
+- name: Adicionar chaves públicas para root
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ item }}"
+  with_file:
+    - public_keys/vagrant.pub
+
+- name: Adicionar chaves públicas para vagrant
+  authorized_key:
+    user: vagrant
+    state: present
+    key: "{{ item }}"
+  with_file:
+    - public_keys/vagrant.pub
+
+- name: Modificar /etc/sudoers
+  lineinfile:
+    path: /etc/sudoers
+    line: 'vagrant ALL=(ALL:ALL) NOPASSWD: ALL'
+    insertbefore: BOF
+
+
+# ---------------------------------------------------
+#                INSTALAÇÃO CONTAINERD
+# ---------------------------------------------------
+- name: Instalar containerd 1.6.9-1
+  apt:
+    name: containerd.io=1.6.9-1
     state: present
     update_cache: yes
     force: true
 
-- name: Ensure containerd config directory exists.
+- name: Certifique-se de que o containerd seja iniciado e ativado na inicialização
+  service:
+    name: containerd
+    state: started
+    enabled: true
+
+
+- name: Verifique se o diretório de configuração containerd existe.
   file:
     path: /etc/containerd
     state: directory
   register: containerd_dir
 
-- name: Get defaults from containerd.
+- name: Obter padrões do containerd.
   command: containerd config default
   changed_when: false
   register: containerd_config_default
   when: containerd_config_default_write
 
-- name: Prepare containerd/config.toml from default config
+- name: Prepare containerd/config.toml a partir da configuração padrão.
   copy:
     dest: /tmp/containerd_config.toml
     content: "{{ containerd_config_default.stdout }}"
   when: containerd_config_default_write
   changed_when: false
-- name: Set Cgroup driver to systemd
+
+- name: Defina o driver do Cgroup como systemd
   lineinfile:
     insertafter: '.*\[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options\]$'
     line: '          SystemdCgroup = true'
@@ -54,7 +145,7 @@
   when: containerd_config_default_write and containerd_config_cgroup_driver_systemd
   changed_when: false
 
-- name: Make sure  SystemdCgroup = false is not set
+- name: Certifique-se de que SystemdCgroup = false não esteja definido
   ansible.builtin.lineinfile:
     path: /tmp/containerd_config.toml
     state: absent
@@ -62,63 +153,63 @@
   when: containerd_config_default_write and containerd_config_cgroup_driver_systemd
   changed_when: false
 
-- name: Copy config.toml to /etc/containerd
+- name: Copiar config.toml para /etc/containerd
   copy:
     remote_src: true
     src: /tmp/containerd_config.toml
     dest: /etc/containerd/config.toml
   when: containerd_config_default_write
 
-- name: Cleanup temporary file
+- name: Limpar arquivo temporário
   file:
     path: /tmp/containerd_config.toml
     state: absent
   changed_when: false
   
-- name: restart containerd
+- name: Reiniciar o Containerd
   service:
     name: containerd
     state: restarted
 
-- name: Instalar docker-ce 5:20.10.17
-  apt:
-    name:
-      - "docker-ce=5:20.10.17~3-0~{{ ansible_distribution | lower }}-{{ ansible_distribution_release }}"
-      - "docker-ce-cli=5:20.10.17~3-0~{{ ansible_distribution | lower }}-{{ ansible_distribution_release }}"
-    state: present
-    force: True
+# - name: Instalar docker-ce 5:20.10.17
+#   apt:
+#     name:
+#       - "docker-ce=5:20.10.17~3-0~{{ ansible_distribution | lower }}-{{ ansible_distribution_release }}"
+#       - "docker-ce-cli=5:20.10.17~3-0~{{ ansible_distribution | lower }}-{{ ansible_distribution_release }}"
+#     state: present
+#     force: True
 
-- name: Configurar hold dos pacotes
-  dpkg_selections:
-    name: "{{ item }}"
-    selection: hold
-  with_items:
-    - docker-ce
-    - docker-ce-cli
-    - containerd.io
+# - name: Configurar hold dos pacotes
+#   dpkg_selections:
+#     name: "{{ item }}"
+#     selection: hold
+#   with_items:
+#     - docker-ce
+#     - docker-ce-cli
+#     - containerd.io
 
-- name: Instalar pip
-  package:
-    name: "{{ item }}"
-    state: present
-    update_cache: yes
-    force: true
-  with_items:
-    - python3-pip
+# - name: Instalar pip
+#   package:
+#     name: "{{ item }}"
+#     state: present
+#     update_cache: yes
+#     force: true
+#   with_items:
+#     - python3-pip
 
-- name: Instalar python-docker 
-  pip:
-    name: docker
-    state: present
+# - name: Instalar python-docker 
+#   pip:
+#     name: docker
+#     state: present
 
-- name: Copiar template do daemon.json
-  template:
-    src: templates/daemon.json.j2
-    dest: /etc/docker/daemon.json
+# - name: Copiar template do daemon.json
+#   template:
+#     src: templates/daemon.json.j2
+#     dest: /etc/docker/daemon.json
 
-- name: Restartar serviço do docker
-  service:
-    name: docker
-    enabled: yes
-    state: restarted
-    daemon_reload: yes
+# - name: Restartar serviço do docker
+#   service:
+#     name: docker
+#     enabled: yes
+#     state: restarted
+#     daemon_reload: yes

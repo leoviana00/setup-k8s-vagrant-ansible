@@ -9,11 +9,11 @@
     - ca-certificates
     - software-properties-common
     - curl
+    - lsb-release
     - gnupg-agent
     - gnupg2
-    - molly-guard
-    - pass
+
 
 - include_tasks: docker.yml
 
-- include_tasks: users.yml
+# - include_tasks: users.yml
