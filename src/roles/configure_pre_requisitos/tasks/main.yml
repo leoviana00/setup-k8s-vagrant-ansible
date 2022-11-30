@@ -2,6 +2,22 @@
 # ---------------------------------------------------
 #                INSTALAÇÃO DOCKER
 # ---------------------------------------------------
+- name: Instalar pacotes de dependências
+  package:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+    - software-properties-common
+    - curl
+    - lsb-release
+    - gnupg-agent
+    - gnupg2
+    - python3-pip
+    - python3-setuptools
+
 - name: Remover versões legadas do docker
   package:
     name: "{{ item }}"
@@ -22,14 +38,6 @@
     state: present
     update_cache: true
 
-# - name: Instalar docker-ce 5:20.10.21
-#   apt:
-#     name:
-#       - "docker-ce=5:20.10.21~3-0~{{ ansible_distribution | lower }}-{{ ansible_distribution_release }}"
-#       - "docker-ce-cli=5:20.10.21~3-0~{{ ansible_distribution | lower }}-{{ ansible_distribution_release }}"
-#     state: present
-#     force: True
-
 - name: Configurar hold dos pacotes
   apt:
     name: "{{ item }}"
@@ -40,19 +48,16 @@
     - docker-ce-cli
     - containerd.io
 
-# - name: Instalar pip
-#   package:
-#     name: "{{ item }}"
-#     state: present
-#     update_cache: yes
-#     force: true
-#   with_items:
-#     - python3-pip
+- name: Instalar python-docker 
+  pip:
+    name: docker
+    state: present
 
-# - name: Instalar python-docker 
-#   pip:
-#     name: docker
-#     state: present
+- name: Instalar Docker Compose
+  get_url:
+    url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: 0755
 
 - name: Restartar serviço do docker
   service:
@@ -83,7 +88,7 @@
     state: present
     key: "{{ item }}"
   with_file:
-    - public_keys/vagrant.pub
+    - keys/vagrant.pub
 
 - name: Adicionar chaves públicas para vagrant
   authorized_key:
@@ -91,7 +96,7 @@
     state: present
     key: "{{ item }}"
   with_file:
-    - public_keys/vagrant.pub
+    - keys/vagrant.pub
 
 - name: Modificar /etc/sudoers
   lineinfile:
@@ -170,46 +175,3 @@
   service:
     name: containerd
     state: restarted
-
-# - name: Instalar docker-ce 5:20.10.17
-#   apt:
-#     name:
-#       - "docker-ce=5:20.10.17~3-0~{{ ansible_distribution | lower }}-{{ ansible_distribution_release }}"
-#       - "docker-ce-cli=5:20.10.17~3-0~{{ ansible_distribution | lower }}-{{ ansible_distribution_release }}"
-#     state: present
-#     force: True
-
-# - name: Configurar hold dos pacotes
-#   dpkg_selections:
-#     name: "{{ item }}"
-#     selection: hold
-#   with_items:
-#     - docker-ce
-#     - docker-ce-cli
-#     - containerd.io
-
-# - name: Instalar pip
-#   package:
-#     name: "{{ item }}"
-#     state: present
-#     update_cache: yes
-#     force: true
-#   with_items:
-#     - python3-pip
-
-# - name: Instalar python-docker 
-#   pip:
-#     name: docker
-#     state: present
-
-# - name: Copiar template do daemon.json
-#   template:
-#     src: templates/daemon.json.j2
-#     dest: /etc/docker/daemon.json
-
-# - name: Restartar serviço do docker
-#   service:
-#     name: docker
-#     enabled: yes
-#     state: restarted
-#     daemon_reload: yes
