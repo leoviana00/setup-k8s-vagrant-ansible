@@ -35,9 +35,9 @@
       update_cache: yes
     vars:
       packages:
-        - kubelet 
-        - kubeadm 
-        - kubectl
+        - kubelet=1.21.7-00 
+        - kubeadm=1.21.7-00
+        - kubectl=1.21.7-00
 
   - name: Configurar o ip do nó
     lineinfile:
@@ -57,10 +57,3 @@
 
   - name: Join the node to cluster
     command: sh /tmp/join-command.sh
-
-# --------------------------------------------------
-# Configure um manipulador para verificar o daemon do Docker usando o código abaixo.
-# --------------------------------------------------
-  # handlers:
-  #   - name: status docker
-  #     service: name=docker state=started

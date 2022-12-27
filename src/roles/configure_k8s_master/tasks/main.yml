@@ -35,9 +35,9 @@
       update_cache: yes
     vars:
       packages:
-        - kubelet
-        - kubeadm
-        - kubectl
+        - kubelet=1.21.7-00
+        - kubeadm=1.21.7-00
+        - kubectl=1.21.7-00
 
   - name: Configurar o ip do nó
     lineinfile:
@@ -85,9 +85,3 @@
     become: false
     local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
   
-# --------------------------------------------------
-# Configure um manipulador para verificar o daemon do Docker usando o código abaixo.
-# --------------------------------------------------
-  # handlers:
-  #   - name: status docker
-  #     service: name=docker state=started
