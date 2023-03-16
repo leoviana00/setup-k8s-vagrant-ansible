@@ -36,6 +36,20 @@
 make requirements
 ```
 
+- OBS: Você pode enfrentar problemas com o vagrant para criar redes privadas. Significa que o Vagrant não poderá criar uma rede diferente da série 198.
+- Para resolver o problema edite ou caso não tenha crie o arquivo de configuração `/etc/vbox/networks.conf` e adicione o seguinte:
+
+```console
+* 0.0.0.0/0 ::/0
+```
+
+- Ou use o comando
+
+```bash
+sudo mkdir -p /etc/vbox/
+echo "* 0.0.0.0/0 ::/0" | sudo tee -a /etc/vbox/networks.conf
+```
+
 2. Subir ambiente
 
 ```bash
